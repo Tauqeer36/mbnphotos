@@ -1,11 +1,11 @@
 {
-    "name": "Gift Store",
-    "short_name": "HHO Gifts",
+    "name": "MBN Photo Library",
+    "short_name": "MBN Photos",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A Gift selection app that helps user select and send items over email",
+    "description": "A New Photo Gallery",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
