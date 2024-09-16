@@ -1,8 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head> <title>I so static </title>
-  </head>
-  <body>
-    Hey Azure
-  </body>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A Gift selection app that helps user select and send items over email">
+ 
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Gallery">
+  <meta name="referrer" content="strict-origin">
+  <link rel="apple-touch-icon" href="icons/MBN-Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>CPO Gift Store</title>
+  <!-- <link rel="manifest" href="manifest.json"> -->
+
+  <script>
+  // Check if the browser is Safari (not Chrome)
+// Safari's user agent string includes "Safari", while Chrome's includes both "Safari" and "Chrome"
+if (
+  navigator.userAgent.indexOf("Safari") !== -1 && // Check if "Safari" is in the user agent string
+  navigator.userAgent.indexOf("Chrome") === -1    // Ensure "Chrome" is NOT in the user agent string
+) {
+  
+  // Save the original 'getContext' method of HTMLCanvasElement
+  var originalGetContext = HTMLCanvasElement.prototype.getContext;
+
+  // Override the 'getContext' method of HTMLCanvasElement
+  HTMLCanvasElement.prototype.getContext = function () {
+
+    // Get the first argument passed to 'getContext', which is the context type (e.g., "2d", "webgl", "webgl2")
+    var contextType = arguments[0];
+
+    // If the context type is "webgl2", return 'undefined' to prevent creating a WebGL 2.0 context
+    if (contextType === "webgl2") {
+      return;
+    }
+
+    // For other context types, call the original 'getContext' method with all original arguments
+    return originalGetContext.apply(
+      this, // 'this' refers to the HTMLCanvasElement on which 'getContext' is called
+      [contextType].concat(Array.prototype.slice.call(arguments, 1)) // Pass all arguments to the original method
+    );
+  };
+}
+
+  </script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
+  <!-- <script src="saml_auth.js"></script> -->
+  <script>
+
+
+    function playSound() {
+      var audio = new Audio('assets/Smart_UI_Notification_Tech.wav');
+      audio.play();
+    }
+  </script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script> -->
+ 
+    <!-- ... -->
+    <!-- <script type="application/javascript" src="/assets/web_support.js" defer></script> -->
+    <!-- ... -->
+
+</head>
+<body>
+   <!-- This script installs service_worker.js to provide PWA functionality to
+       application. For more information, see:
+       https://developers.google.com/web/fundamentals/primers/service-workers -->
+       <script src="flutter_bootstrap.js" async></script>
+</body>
 </html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Auth</title>
+    <meta name="description"
+        content="Simple, quick, standalone responsive placeholder without any additional resources">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+ 
+<script>
+//   window.opener.postMessage({
+//     'flutter-web-auth': window.location.href
+//   }, window.location.origin);
+  window.close();
+window.opener.postMessage({ SAMLResponse: 'example_SAML_response' }, window.location.origin);
+//window.close();
+  // Function to parse query parameters from URL
+//   function getQueryParam(name) {
+//             name = name.replace(/[\[\]]/g, '\\$&');
+//             var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+//                 results = regex.exec(window.location.href);
+//             if (!results) return null;
+//             if (!results[2]) return '';
+//             return decodeURIComponent(results[2].replace(/\+/g, ' '));
+//         }
+
+//         // Example: Parse token parameter from URL
+//         var token = getQueryParam('token'); // Adjust 'token' to match your parameter name
+// console.log(toekn);
+//         // Example: Send token to parent window (opener) using postMessage
+//         if (window.opener) {
+//             window.opener.postMessage({ token: token }, window.location.origin);
+//         } else {
+//             console.error('No parent window (opener) found.');
+//         }
+</script>
+</head>
+
+<body>
+    <h2>Authentication Succeeded</h2>
+    <h3>Close this window if it didn't close by itself.</h3>
+</body>
+<script>
+    // window.opener.postMessage(window.location.href, '*');
+</script>
+
+</html>

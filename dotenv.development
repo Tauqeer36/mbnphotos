@@ -1,0 +1,8 @@
+STORAGE_ACCOUNT_NAME=cpodevsharing
+CONTAINER_NAME=published
+SAS_TOKEN=sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2024-09-30T20:46:43Z&st=2024-05-23T12:46:43Z&spr=https&sig=81n7oJf5sOB36AdVIE3jmywi%2F5nn51myAVo3pKMRT5M%3D
+IDP=https://login.microsoftonline.com/e88ad4a6-667d-4284-8132-daf546235711/saml2
+EMAIL_SCHEMA=http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+GROUPS_SCHEMA=http://schemas.microsoft.com/ws/2008/06/identity/claims/groups
+APP_ID=55638de7-1f6d-4d32-90f8-0132ba8b7e6e
+SAML_ID=C2dE3fH4iJ5kL6mN7oP8qR9sT0uV1w
