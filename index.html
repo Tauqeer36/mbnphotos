@@ -402,7 +402,7 @@
 
     <script>
    document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('imageModal');
+  const modal = document.getElementById('imageModal');
     const slider = modal.querySelector('.slider');
     const backButton = modal.querySelector('.back-button');
     let currentIndex = 0;
@@ -415,20 +415,28 @@
     let startDistance = 0;
     let currentScale = 1;
     let initialScale = 1;
-    let lastTouchTime = 0;
+    let lastTapTime = 0;
+    let lastTouchEndTime = 0;
 
-    function setSliderPosition(position, scale = 1) {
+  function setSliderPosition(position, scale = 1) {
         const currentSlide = slider.children[currentIndex];
         if (currentSlide) {
             currentSlide.style.transform = `scale(${scale})`;
         }
         slider.style.transform = `translateX(${position}px)`;
     }
-
+   function resetZoom(animate = true) {
+        currentScale = 1;
+        const currentSlide = slider.children[currentIndex];
+        if (currentSlide) {
+            currentSlide.style.transition = animate ? 'transform 0.3s ease-out' : 'none';
+            currentSlide.style.transform = 'scale(1)';
+        }
+    }
     function showSlide(index, animate = true) {
         currentIndex = index;
         const position = -index * slideWidth;
-        currentScale = 1;
+        resetZoom(animate);
         
         if (animate) {
             slider.style.transition = 'transform 0.3s ease-out';
@@ -452,6 +460,10 @@
             const slide = document.createElement('div');
             slide.className = 'slide';
             slide.innerHTML = `<img src="${img.src}" alt="${img.alt}" draggable="false">`;
+            
+            // Add tap handler for each slide
+            slide.addEventListener('click', handleTap);
+            
             slider.appendChild(slide);
         });
     }
@@ -511,18 +523,41 @@
         
         setSliderPosition(position);
     }
-
-    function handleEnd(event) {
-        if (isZooming) {
-            isZooming = false;
-            if (currentScale < 1.1) {
-                currentScale = 1;
+ function handleTap(event) {
+        const currentTime = new Date().getTime();
+        const timeSinceLastTap = currentTime - lastTapTime;
+        
+        if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+            // Double tap detected
+            if (currentScale > 1) {
+                resetZoom(true);
+            } else {
+                currentScale = 2; // Or whatever zoom level you prefer
                 const currentSlide = slider.children[currentIndex];
                 if (currentSlide) {
                     currentSlide.style.transition = 'transform 0.3s ease-out';
-                    currentSlide.style.transform = 'scale(1)';
+                    currentSlide.style.transform = `scale(${currentScale})`;
                 }
             }
+        }
+        
+        lastTapTime = currentTime;
+    }
+    function handleEnd(event) {
+        const currentTime = new Date().getTime();
+        
+        if (isZooming) {
+            isZooming = false;
+            if (currentScale < 1.1) {
+                resetZoom(true);
+            }
+            return;
+        }
+
+        // Single tap detection for zoom reset
+        if (!isDragging && currentScale > 1 && (currentTime - lastTouchEndTime) > 300) {
+            resetZoom(true);
+            lastTouchEndTime = currentTime;
             return;
         }
 
@@ -550,6 +585,8 @@
         } else {
             showSlide(currentIndex);
         }
+
+        lastTouchEndTime = currentTime;
     }
 
     // Event Listeners
