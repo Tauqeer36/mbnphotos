@@ -458,7 +458,7 @@
     <button class="approve-btn">Approve Selection</button>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
+     document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('imageModal');
     const slider = modal.querySelector('.slider');
     const backButton = modal.querySelector('.back-button');
@@ -466,24 +466,22 @@
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
+    let slideWidth = window.innerWidth;
+    let startDragX = 0; // Track initial drag position
 
-    function updateTransform(x) {
+    function updateTransform(x, useTransition = true) {
         currentX = x;
-        const transform = `translateX(${x}px)`;
-        slider.style.transform = transform;
-        slider.style.webkitTransform = transform;
+        if (!useTransition) {
+            slider.style.transition = 'none';
+        } else {
+            slider.style.transition = 'transform 0.3s ease-out';
+        }
+        slider.style.transform = `translateX(${x}px)`;
     }
 
-    function showSlideImmediately(index) {
-        currentIndex = index;
-        const x = -index * window.innerWidth;
-        slider.style.transition = 'none';
-        slider.style.webkitTransition = 'none';
-        updateTransform(x);
-        // Force reflow
-        slider.offsetHeight;
-        slider.style.transition = 'transform 0.3s ease-out';
-        slider.style.webkitTransition = '-webkit-transform 0.3s ease-out';
+    function showSlide(index) {
+        currentIndex = Math.max(0, Math.min(index, slider.children.length - 1));
+        updateTransform(-currentIndex * slideWidth, true);
     }
 
     function createSlides() {
@@ -497,47 +495,48 @@
         });
     }
 
-    // Touch Handling
     function handleTouchStart(e) {
-        if (e.touches.length > 1) return; // Ignore multitouch
+        if (e.touches.length > 1) return;
         isDragging = true;
-        startX = e.touches[0].clientX - currentX;
-        slider.style.transition = 'none';
-        slider.style.webkitTransition = 'none';
+        startX = e.touches[0].clientX;
+        startDragX = currentX;
+        updateTransform(currentX, false);
     }
 
     function handleTouchMove(e) {
-        if (!isDragging || e.touches.length > 1) return;
+        if (!isDragging) return;
         e.preventDefault();
-        const touch = e.touches[0];
-        const newX = touch.clientX - startX;
-        updateTransform(newX);
+        const deltaX = e.touches[0].clientX - startX;
+        updateTransform(startDragX + deltaX, false);
     }
 
-    function endDragging() {
+    function handleDragEnd() {
         if (!isDragging) return;
         isDragging = false;
-        
-        slider.style.transition = 'transform 0.3s ease-out';
-        slider.style.webkitTransition = '-webkit-transform 0.3s ease-out';
-        
-        const slideWidth = window.innerWidth;
-        const movement = currentX % slideWidth;
-        const slidesMoved = Math.round(currentX / slideWidth);
-        
-        currentIndex = Math.max(0, Math.min(document.querySelectorAll('.slide').length - 1, -slidesMoved));
-        const newX = -currentIndex * slideWidth;
-        updateTransform(newX);
+
+        const dragDistance = currentX - startDragX;
+        const threshold = slideWidth * 0.2; // 20% threshold for slide change
+
+        if (Math.abs(dragDistance) > threshold) {
+            // If dragged more than threshold, move to next/previous slide
+            if (dragDistance > 0) {
+                currentIndex = Math.max(0, currentIndex - 1);
+            } else {
+                currentIndex = Math.min(slider.children.length - 1, currentIndex + 1);
+            }
+        }
+
+        showSlide(currentIndex);
     }
 
-    // Event Listeners
     document.querySelectorAll('.grid-item').forEach((item, index) => {
         item.addEventListener('click', () => {
             createSlides();
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
-            modal.offsetHeight; // Force reflow
-            showSlideImmediately(index);
+            slideWidth = window.innerWidth;
+            currentIndex = index;
+            showSlide(currentIndex);
         });
     });
 
@@ -549,18 +548,49 @@
     // Touch events
     slider.addEventListener('touchstart', handleTouchStart, { passive: true });
     slider.addEventListener('touchmove', handleTouchMove, { passive: false });
-    slider.addEventListener('touchend', endDragging);
-    slider.addEventListener('touchcancel', endDragging);
+    slider.addEventListener('touchend', handleDragEnd);
+    slider.addEventListener('touchcancel', handleDragEnd);
 
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        if (modal.style.display === 'block') {
-            const newX = -currentIndex * window.innerWidth;
-            updateTransform(newX);
+    // Mouse events
+    let isMouseDown = false;
+
+    slider.addEventListener('mousedown', (e) => {
+        isMouseDown = true;
+        startX = e.clientX;
+        startDragX = currentX;
+        updateTransform(currentX, false);
+    });
+
+    slider.addEventListener('mousemove', (e) => {
+        if (!isMouseDown) return;
+        e.preventDefault();
+        const deltaX = e.clientX - startX;
+        updateTransform(startDragX + deltaX, false);
+    });
+
+    slider.addEventListener('mouseup', () => {
+        if (isMouseDown) {
+            isMouseDown = false;
+            handleDragEnd();
         }
     });
 
-    // Like functionality (unchanged)
+    slider.addEventListener('mouseleave', () => {
+        if (isMouseDown) {
+            isMouseDown = false;
+            handleDragEnd();
+        }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        slideWidth = window.innerWidth;
+        if (modal.style.display === 'block') {
+            updateTransform(-currentIndex * slideWidth, false);
+        }
+    });
+
+    // Like functionality
     document.querySelectorAll('.heart-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
