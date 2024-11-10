@@ -409,13 +409,20 @@
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
+    let isZooming = false;
     let slideWidth = window.innerWidth;
     let initialPosition = 0;
-    let initialScale = 1;
+    let startDistance = 0;
     let currentScale = 1;
+    let initialScale = 1;
+    let lastTouchTime = 0;
 
-    function setSliderPosition(position, scale = currentScale) {
-        slider.style.transform = `translateX(${position}px) scale(${scale})`;
+    function setSliderPosition(position, scale = 1) {
+        const currentSlide = slider.children[currentIndex];
+        if (currentSlide) {
+            currentSlide.style.transform = `scale(${scale})`;
+        }
+        slider.style.transform = `translateX(${position}px)`;
     }
 
     function showSlide(index, animate = true) {
@@ -428,6 +435,12 @@
         } else {
             slider.style.transition = 'none';
         }
+        
+        // Reset scale on all slides
+        Array.from(slider.children).forEach(slide => {
+            slide.style.transition = animate ? 'transform 0.3s ease-out' : 'none';
+            slide.style.transform = 'scale(1)';
+        });
         
         setSliderPosition(position);
     }
@@ -451,34 +464,46 @@
     }
 
     function handleStart(event) {
-        if (event.touches && event.touches.length > 1) {
+        if (event.touches && event.touches.length === 2) {
             // Pinch gesture starting
+            isZooming = true;
+            isDragging = false;
+            startDistance = getDistance(event.touches);
             initialScale = currentScale;
+            event.preventDefault();
             return;
         }
 
+        // Single touch or mouse
         const clientX = event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
         isDragging = true;
+        isZooming = false;
         startX = clientX;
         initialPosition = -currentIndex * slideWidth;
         slider.style.transition = 'none';
-        event.preventDefault();
     }
 
     function handleMove(event) {
-        if (event.touches && event.touches.length > 1) {
-            // Handle pinch
+        if (event.touches && event.touches.length === 2) {
+            // Handle pinch zoom
+            if (!isZooming) return;
             event.preventDefault();
+            
             const distance = getDistance(event.touches);
-            const initialDistance = getDistance(event.touches);
-            currentScale = Math.min(Math.max(1, initialScale * (distance / initialDistance)), 3);
-            setSliderPosition(currentX, currentScale);
+            const scale = (distance / startDistance) * initialScale;
+            currentScale = Math.min(Math.max(1, scale), 3);
+            
+            const currentSlide = slider.children[currentIndex];
+            if (currentSlide) {
+                currentSlide.style.transition = 'none';
+                currentSlide.style.transform = `scale(${currentScale})`;
+            }
             return;
         }
 
-        if (!isDragging) return;
-        event.preventDefault();
-        
+        if (!isDragging || isZooming) return;
+        if (currentScale > 1) return; // Prevent sliding when zoomed
+
         const clientX = event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
         const diff = clientX - startX;
         const position = initialPosition + diff;
@@ -488,17 +513,26 @@
     }
 
     function handleEnd(event) {
-        if (!isDragging && currentScale !== 1) {
-            // Handle pinch end
+        if (isZooming) {
+            isZooming = false;
             if (currentScale < 1.1) {
                 currentScale = 1;
-                setSliderPosition(currentX, 1);
+                const currentSlide = slider.children[currentIndex];
+                if (currentSlide) {
+                    currentSlide.style.transition = 'transform 0.3s ease-out';
+                    currentSlide.style.transform = 'scale(1)';
+                }
             }
             return;
         }
 
         if (!isDragging) return;
         isDragging = false;
+
+        if (currentScale > 1) {
+            setSliderPosition(-currentIndex * slideWidth);
+            return;
+        }
         
         const endPosition = currentX;
         const diff = endPosition - initialPosition;
@@ -562,6 +596,20 @@
     });
 
     // Like functionality remains the same...
+	   document.querySelectorAll('.heart-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            btn.classList.toggle('liked');
+            btn.textContent = btn.classList.contains('liked') ? '♥' : '♡';
+            updateLikeCount();
+        });
+    });
+
+    function updateLikeCount() {
+        const totalLikes = document.querySelectorAll('.heart-btn.liked').length;
+        const totalImages = document.querySelectorAll('.heart-btn').length;
+        document.querySelector('.stats-text').textContent = `${totalLikes}/${totalImages}`;
+    }
 });
     </script>
 </body>
