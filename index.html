@@ -402,12 +402,14 @@
 
     <script>
    document.addEventListener('DOMContentLoaded', function() {
-  const modal = document.getElementById('imageModal');
+    const modal = document.getElementById('imageModal');
     const slider = modal.querySelector('.slider');
     const backButton = modal.querySelector('.back-button');
     let currentIndex = 0;
     let startX = 0;
+    let startY = 0;
     let currentX = 0;
+    let currentY = 0;
     let isDragging = false;
     let isZooming = false;
     let slideWidth = window.innerWidth;
@@ -417,22 +419,35 @@
     let initialScale = 1;
     let lastTapTime = 0;
     let lastTouchEndTime = 0;
+    let panX = 0;
+    let panY = 0;
+    let startPanX = 0;
+    let startPanY = 0;
 
-  function setSliderPosition(position, scale = 1) {
-        const currentSlide = slider.children[currentIndex];
-        if (currentSlide) {
-            currentSlide.style.transform = `scale(${scale})`;
-        }
+    function setTransform(element, x = 0, y = 0, scale = 1) {
+        element.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    }
+
+    function setSliderPosition(position) {
         slider.style.transform = `translateX(${position}px)`;
     }
-   function resetZoom(animate = true) {
+
+    function resetZoom(animate = true) {
         currentScale = 1;
+        panX = 0;
+        panY = 0;
         const currentSlide = slider.children[currentIndex];
         if (currentSlide) {
             currentSlide.style.transition = animate ? 'transform 0.3s ease-out' : 'none';
-            currentSlide.style.transform = 'scale(1)';
+            setTransform(currentSlide, 0, 0, 1);
         }
     }
+
+    function limitPan(value, scale, dimension) {
+        const maxPan = (scale - 1) * dimension / 2;
+        return Math.min(Math.max(value, -maxPan), maxPan);
+    }
+
     function showSlide(index, animate = true) {
         currentIndex = index;
         const position = -index * slideWidth;
@@ -444,10 +459,9 @@
             slider.style.transition = 'none';
         }
         
-        // Reset scale on all slides
         Array.from(slider.children).forEach(slide => {
             slide.style.transition = animate ? 'transform 0.3s ease-out' : 'none';
-            slide.style.transform = 'scale(1)';
+            setTransform(slide, 0, 0, 1);
         });
         
         setSliderPosition(position);
@@ -460,12 +474,73 @@
             const slide = document.createElement('div');
             slide.className = 'slide';
             slide.innerHTML = `<img src="${img.src}" alt="${img.alt}" draggable="false">`;
-            
-            // Add tap handler for each slide
             slide.addEventListener('click', handleTap);
-            
             slider.appendChild(slide);
         });
+    }
+
+    function handleTap(event) {
+        const currentTime = new Date().getTime();
+        const timeSinceLastTap = currentTime - lastTapTime;
+        
+        if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+            // Double tap detected
+            const rect = event.target.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            if (currentScale > 1) {
+                resetZoom(true);
+            } else {
+                currentScale = 2.5;
+                const currentSlide = slider.children[currentIndex];
+                if (currentSlide) {
+                    const targetX = (x - rect.width / 2) * (currentScale - 1);
+                    const targetY = (y - rect.height / 2) * (currentScale - 1);
+                    panX = -limitPan(targetX, currentScale, rect.width);
+                    panY = -limitPan(targetY, currentScale, rect.height);
+                    currentSlide.style.transition = 'transform 0.3s ease-out';
+                    setTransform(currentSlide, panX, panY, currentScale);
+                }
+            }
+        }
+        
+        lastTapTime = currentTime;
+    }
+
+    function handleStart(event) {
+        if (event.touches && event.touches.length === 2) {
+            isZooming = true;
+            isDragging = false;
+            startDistance = getDistance(event.touches);
+            initialScale = currentScale;
+            event.preventDefault();
+            
+            // Store the midpoint of the two touches
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+            startX = (touch1.clientX + touch2.clientX) / 2;
+            startY = (touch1.clientY + touch2.clientY) / 2;
+            startPanX = panX;
+            startPanY = panY;
+            return;
+        }
+
+        const clientX = event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
+        const clientY = event.type.includes('mouse') ? event.clientY : event.touches[0].clientY;
+        isDragging = true;
+        isZooming = false;
+        startX = clientX;
+        startY = clientY;
+        startPanX = panX;
+        startPanY = panY;
+        initialPosition = -currentIndex * slideWidth;
+        
+        const currentSlide = slider.children[currentIndex];
+        if (currentSlide) {
+            currentSlide.style.transition = 'none';
+        }
+        slider.style.transition = 'none';
     }
 
     function getDistance(touches) {
@@ -475,74 +550,57 @@
         );
     }
 
-    function handleStart(event) {
-        if (event.touches && event.touches.length === 2) {
-            // Pinch gesture starting
-            isZooming = true;
-            isDragging = false;
-            startDistance = getDistance(event.touches);
-            initialScale = currentScale;
-            event.preventDefault();
-            return;
-        }
-
-        // Single touch or mouse
-        const clientX = event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
-        isDragging = true;
-        isZooming = false;
-        startX = clientX;
-        initialPosition = -currentIndex * slideWidth;
-        slider.style.transition = 'none';
-    }
-
     function handleMove(event) {
         if (event.touches && event.touches.length === 2) {
-            // Handle pinch zoom
             if (!isZooming) return;
             event.preventDefault();
             
             const distance = getDistance(event.touches);
-            const scale = (distance / startDistance) * initialScale;
-            currentScale = Math.min(Math.max(1, scale), 3);
+            const scale = Math.min(Math.max((distance / startDistance) * initialScale, 1), 4);
+            currentScale = scale;
+            
+            // Calculate the midpoint of the two touches
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+            const currentX = (touch1.clientX + touch2.clientX) / 2;
+            const currentY = (touch1.clientY + touch2.clientY) / 2;
+            
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
             
             const currentSlide = slider.children[currentIndex];
             if (currentSlide) {
-                currentSlide.style.transition = 'none';
-                currentSlide.style.transform = `scale(${currentScale})`;
+                const rect = currentSlide.getBoundingClientRect();
+                panX = limitPan(startPanX + deltaX, scale, rect.width);
+                panY = limitPan(startPanY + deltaY, scale, rect.height);
+                setTransform(currentSlide, panX, panY, scale);
             }
             return;
         }
 
-        if (!isDragging || isZooming) return;
-        if (currentScale > 1) return; // Prevent sliding when zoomed
-
+        if (!isDragging) return;
         const clientX = event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
-        const diff = clientX - startX;
-        const position = initialPosition + diff;
-        currentX = position;
-        
-        setSliderPosition(position);
-    }
- function handleTap(event) {
-        const currentTime = new Date().getTime();
-        const timeSinceLastTap = currentTime - lastTapTime;
-        
-        if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-            // Double tap detected
-            if (currentScale > 1) {
-                resetZoom(true);
-            } else {
-                currentScale = 2; // Or whatever zoom level you prefer
-                const currentSlide = slider.children[currentIndex];
-                if (currentSlide) {
-                    currentSlide.style.transition = 'transform 0.3s ease-out';
-                    currentSlide.style.transform = `scale(${currentScale})`;
-                }
+        const clientY = event.type.includes('mouse') ? event.clientY : event.touches[0].clientY;
+        const deltaX = clientX - startX;
+        const deltaY = clientY - startY;
+
+        if (currentScale > 1) {
+            // Pan the zoomed image
+            const currentSlide = slider.children[currentIndex];
+            if (currentSlide) {
+                const rect = currentSlide.getBoundingClientRect();
+                panX = limitPan(startPanX + deltaX, currentScale, rect.width);
+                panY = limitPan(startPanY + deltaY, currentScale, rect.height);
+                setTransform(currentSlide, panX, panY, currentScale);
             }
+        } else {
+            // Slide between images
+            const position = initialPosition + deltaX;
+            setSliderPosition(position);
+            currentX = position;
         }
-        
-        lastTapTime = currentTime;
     }
+
     function handleEnd(event) {
         const currentTime = new Date().getTime();
         
@@ -554,7 +612,6 @@
             return;
         }
 
-        // Single tap detection for zoom reset
         if (!isDragging && currentScale > 1 && (currentTime - lastTouchEndTime) > 300) {
             resetZoom(true);
             lastTouchEndTime = currentTime;
@@ -565,7 +622,7 @@
         isDragging = false;
 
         if (currentScale > 1) {
-            setSliderPosition(-currentIndex * slideWidth);
+            // Keep current pan position
             return;
         }
         
@@ -597,6 +654,8 @@
             document.body.style.overflow = 'hidden';
             slideWidth = window.innerWidth;
             currentScale = 1;
+            panX = 0;
+            panY = 0;
             showSlide(index, false);
         });
     });
@@ -606,21 +665,20 @@
         document.body.style.overflow = '';
         currentIndex = 0;
         currentScale = 1;
+        panX = 0;
+        panY = 0;
     });
 
-    // Touch Events
     slider.addEventListener('touchstart', handleStart, { passive: false });
     slider.addEventListener('touchmove', handleMove, { passive: false });
     slider.addEventListener('touchend', handleEnd);
     slider.addEventListener('touchcancel', handleEnd);
 
-    // Mouse Events
     slider.addEventListener('mousedown', handleStart);
     slider.addEventListener('mousemove', handleMove);
     slider.addEventListener('mouseup', handleEnd);
     slider.addEventListener('mouseleave', handleEnd);
 
-    // Prevent default zoom behavior
     modal.addEventListener('gesturestart', function(e) {
         e.preventDefault();
     });
@@ -631,8 +689,7 @@
             showSlide(currentIndex, false);
         }
     });
-
-    // Like functionality remains the same...
+	 // Like functionality remains the same...
 	   document.querySelectorAll('.heart-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -648,6 +705,9 @@
         document.querySelector('.stats-text').textContent = `${totalLikes}/${totalImages}`;
     }
 });
+
+   
+
     </script>
 </body>
 </html>
