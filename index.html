@@ -4,219 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Gallery</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+   <style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            overflow-x: hidden;
-            font-family: Arial, sans-serif;
-            background-color: rgb(255, 254, 250);
-        }
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        overflow-x: hidden;
+        font-family: Arial, sans-serif;
+        background-color: rgb(255, 254, 250);
+    }
 
-        .top-ribbon {
-            width: 100%;
-            height: 20px;
-            background-color: rgba(14, 25, 65, 1);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
+    .top-ribbon {
+        width: 100%;
+        height: 20px;
+        background-color: rgba(14, 25, 65, 1);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
 
-        .app-header {
-            position: sticky;
-            top: 0;
-            width: 100%;
-            background-color: rgb(255, 254, 250);
-            z-index: 100;
-            padding: 20px 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
+    .app-header {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        background-color: rgb(255, 254, 250);
+        z-index: 100;
+        padding: 20px 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
 
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-        .event-title {
-            font-size: 17px;
-            line-height: 1.3;
-            margin-bottom: 4px;
-            color: #1a1a1a;
-        }
+    .event-title {
+        font-size: 17px;
+        line-height: 1.3;
+        margin-bottom: 4px;
+        color: #1a1a1a;
+    }
 
-        .event-date {
-            font-size: 12px;
-            color: #666;
-        }
+    .event-date {
+        font-size: 12px;
+        color: #666;
+    }
 
-        .gallery {
-            padding: 1rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+    .gallery {
+        padding: 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
-        .masonry-grid {
-            display: flex;
-            width: 100%;
-            gap: 16px;
-        }
-
-        .masonry-column {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .grid-item {
-            position: relative;
-            width: 100%;
-            break-inside: avoid;
-            cursor: pointer;
-        }
-
-        .grid-item img {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 4px;
-        }
-
-        .actions {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            gap: 10px;
-            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7));
-            padding: 30px 10px 10px;
-            justify-content: flex-end;
-            border-bottom-left-radius: 4px;
-            border-bottom-right-radius: 4px;
-        }
-
-        .action-btn {
-            background: transparent;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 8px;
-            font-size: 20px;
-            line-height: 1;
-            height: 36px;
-            width: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .action-btn.liked {
-            color: red;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: black;
-            z-index: 1000;
-        }
-
-        .modal-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: black;
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            z-index: 1001;
-        }
-
-        .back-button {
-            background: transparent;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 8px;
-            font-size: 24px;
-            line-height: 1;
-        }
-
-        .slider-container {
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .slider {
-            height: 100%;
-            display: flex;
-            transform: translateX(0);
-            will-change: transform;
-        }
-
-        .slide {
-            min-width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 0;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .slide img {
-            max-height: calc(100vh - 120px);
-            max-width: 100vw;
-            object-fit: contain;
-            pointer-events: none;
-            -webkit-user-drag: none;
-        }
-
-        .approve-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            background: #1a1a1a;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            z-index: 900;
-        }
-
-        @media (max-width: 768px) {
-            .event-title {
-                font-size: 15px;
-            }
-            .masonry-grid {
-                gap: 8px;
-            }
-            .masonry-column {
-                gap: 8px;
-            }
-        }
-		 /* Updated and new responsive styles */
     .masonry-grid {
         display: flex;
         width: 100%;
@@ -247,7 +94,40 @@
         border-radius: 4px;
     }
 
-    /* Updated modal styles for better mobile experience */
+    .actions {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        gap: 10px;
+        background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7));
+        padding: 30px 10px 10px;
+        justify-content: flex-end;
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+    }
+
+    .action-btn {
+        background: transparent;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 8px;
+        font-size: 20px;
+        line-height: 1;
+        height: 36px;
+        width: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-btn.liked {
+        color: red;
+    }
+
+    /* Modal and Slider styles */
     .modal {
         display: none;
         position: fixed;
@@ -257,53 +137,102 @@
         bottom: 0;
         background: black;
         z-index: 1000;
-        -webkit-overflow-scrolling: touch; /* For iOS momentum scrolling */
+        -webkit-overflow-scrolling: touch;
+        overflow: hidden;
     }
 
+    .modal-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: black;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        z-index: 1001;
+    }
 
-	.slider-container {
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-	 touch-action: pan-y pinch-zoom; /* Enable vertical scrolling and pinch zoom */
-}
+    .back-button {
+        background: transparent;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 8px;
+        font-size: 24px;
+        line-height: 1;
+    }
 
-   .slider {
-    height: 100%;
-    display: flex;
-    transform: translateX(0);
-    -webkit-transform: translateX(0);
-    will-change: transform;
-    width: 100%;
-}
+    .slider-container {
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
 
-   .slide {
-    min-width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-top: 60px;
-}
+    .slider {
+        height: 100%;
+        display: flex;
+        transform: translateX(0);
+        -webkit-transform: translateX(0);
+        will-change: transform;
+        width: 100%;
+        touch-action: none;
+    }
 
-   .slide img {
-    max-height: 90vh;
-    max-width: 90vw;
-    object-fit: contain;
-    pointer-events: none;
-    -webkit-user-drag: none;
-    user-select: none;
-    -webkit-user-select: none;
-}
+    .slide {
+        min-width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 60px;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .slide img {
+        max-height: 90vh;
+        max-width: 90vw;
+        object-fit: contain;
+        pointer-events: none;
+        -webkit-user-drag: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    .approve-btn {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        background: #1a1a1a;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        z-index: 900;
+    }
 
     /* Responsive adjustments */
     @media (max-width: 768px) {
+        .event-title {
+            font-size: 15px;
+        }
+        
         .masonry-grid {
-            display: block; /* Single column for mobile */
+            display: block;
             gap: 8px;
         }
 
@@ -320,35 +249,49 @@
         .grid-item img {
             width: 100%;
             height: auto;
-            aspect-ratio: 4/3; /* Maintain consistent aspect ratio */
+            aspect-ratio: 4/3;
             object-fit: cover;
         }
 
-        .event-title {
-            font-size: 15px;
-        }
-
         .actions {
-            padding: 40px 10px 10px; /* Larger gradient area for touch */
+            padding: 40px 10px 10px;
         }
 
         .action-btn {
-            padding: 12px; /* Larger touch targets */
+            padding: 12px;
             font-size: 24px;
+        }
+
+        .slider-container {
+            touch-action: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .slide img {
+            max-height: calc(100vh - 80px);
+            width: auto;
         }
     }
 
     /* iOS Safari specific fixes */
     @supports (-webkit-touch-callout: none) {
         .slider-container {
+            height: 100vh;
             height: -webkit-fill-available;
         }
 
         .slide {
+            height: 100vh;
             height: -webkit-fill-available;
         }
-    
-    </style>
+
+        .slider {
+            -webkit-overflow-scrolling: touch;
+            -webkit-transform: translateZ(0);
+            -webkit-perspective: 1000;
+        }
+    }
+</style>
 </head>
 <body>
     <div class="top-ribbon"></div>
@@ -464,36 +407,31 @@
     const backButton = modal.querySelector('.back-button');
     let currentIndex = 0;
     let startX = 0;
-    let currentX = 0;
+    let currentTranslate = 0;
     let isDragging = false;
     let slideWidth = window.innerWidth;
-    let startDragX = 0;
 
-    function updateTransform(x, useTransition = true) {
-        currentX = x;
+    function setSliderPosition(position, useTransition = true) {
+        currentTranslate = position;
+        
         if (!useTransition) {
             slider.style.transition = 'none';
-            slider.style.webkitTransition = 'none';
         } else {
             slider.style.transition = 'transform 0.3s ease-out';
-            slider.style.webkitTransition = '-webkit-transform 0.3s ease-out';
         }
-        const transform = `translateX(${x}px)`;
-        slider.style.transform = transform;
-        slider.style.webkitTransform = transform;
+
+        slider.style.transform = `translateX(${position}px)`;
 
         if (!useTransition) {
             // Force reflow
             slider.offsetHeight;
             slider.style.transition = 'transform 0.3s ease-out';
-            slider.style.webkitTransition = '-webkit-transform 0.3s ease-out';
         }
     }
 
     function showSlide(index, immediate = false) {
         currentIndex = Math.max(0, Math.min(index, slider.children.length - 1));
-        const x = -currentIndex * slideWidth;
-        updateTransform(x, !immediate);
+        setSliderPosition(-currentIndex * slideWidth, !immediate);
     }
 
     function createSlides() {
@@ -507,84 +445,69 @@
         });
     }
 
-    // Modified touch handling for Safari
-    function handleTouchStart(e) {
-        if (e.touches.length > 1) return;
+    function handleStart(clientX) {
         isDragging = true;
-        startX = e.touches[0].clientX;
-        startDragX = currentX;
-        updateTransform(currentX, false);
+        startX = clientX;
+        currentTranslate = -currentIndex * slideWidth;
+        setSliderPosition(currentTranslate, false);
     }
 
-    function handleTouchMove(e) {
-        if (!isDragging || e.touches.length > 1) return;
-        e.preventDefault();
-        const deltaX = e.touches[0].clientX - startX;
-        requestAnimationFrame(() => {
-            updateTransform(startDragX + deltaX, false);
-        });
+    function handleMove(clientX) {
+        if (!isDragging) return;
+        const diff = clientX - startX;
+        setSliderPosition(currentTranslate + diff, false);
     }
 
-    function handleDragEnd() {
+    function handleEnd() {
         if (!isDragging) return;
         isDragging = false;
 
-        const dragDistance = currentX - startDragX;
+        const movedBy = currentTranslate + currentIndex * slideWidth;
         const threshold = slideWidth * 0.2;
 
-        let newIndex = currentIndex;
-        if (Math.abs(dragDistance) > threshold) {
-            if (dragDistance > 0 && currentIndex > 0) {
-                newIndex = currentIndex - 1;
-            } else if (dragDistance < 0 && currentIndex < slider.children.length - 1) {
-                newIndex = currentIndex + 1;
+        if (Math.abs(movedBy) > threshold) {
+            if (movedBy > 0 && currentIndex > 0) {
+                currentIndex--;
+            } else if (movedBy < 0 && currentIndex < slider.children.length - 1) {
+                currentIndex++;
             }
         }
 
-        requestAnimationFrame(() => {
-            showSlide(newIndex);
-        });
+        showSlide(currentIndex);
     }
 
-    // Touch Events with Safari fixes
+    // Touch Events
     slider.addEventListener('touchstart', (e) => {
-        handleTouchStart(e);
+        handleStart(e.touches[0].clientX);
     }, { passive: true });
 
     slider.addEventListener('touchmove', (e) => {
-        handleTouchMove(e);
+        e.preventDefault();
+        handleMove(e.touches[0].clientX);
     }, { passive: false });
 
     slider.addEventListener('touchend', () => {
-        handleDragEnd();
+        handleEnd();
     });
 
-    slider.addEventListener('touchcancel', () => {
-        handleDragEnd();
-    });
-
-    // Mouse Events (unchanged)
+    // Mouse Events
     slider.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        handleTouchStart({ touches: [{ clientX: e.clientX }] });
+        handleStart(e.clientX);
     });
 
     slider.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
         e.preventDefault();
-        handleTouchMove({ 
-            preventDefault: () => {},
-            touches: [{ clientX: e.clientX }] 
-        });
+        handleMove(e.clientX);
     });
 
     slider.addEventListener('mouseup', () => {
-        handleDragEnd();
+        handleEnd();
     });
 
     slider.addEventListener('mouseleave', () => {
         if (isDragging) {
-            handleDragEnd();
+            handleEnd();
         }
     });
 
@@ -603,6 +526,7 @@
     backButton.addEventListener('click', () => {
         modal.style.display = 'none';
         document.body.style.overflow = '';
+        isDragging = false;
     });
 
     // Handle window resize
@@ -613,7 +537,7 @@
         }
     });
 
-    // Like functionality (unchanged)
+    // Like functionality
     document.querySelectorAll('.heart-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
