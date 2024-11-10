@@ -473,15 +473,27 @@
         currentX = x;
         if (!useTransition) {
             slider.style.transition = 'none';
+            slider.style.webkitTransition = 'none';
         } else {
             slider.style.transition = 'transform 0.3s ease-out';
+            slider.style.webkitTransition = '-webkit-transform 0.3s ease-out';
         }
-        slider.style.transform = `translateX(${x}px)`;
+        const transform = `translateX(${x}px)`;
+        slider.style.transform = transform;
+        slider.style.webkitTransform = transform;
+
+        if (!useTransition) {
+            // Force reflow
+            slider.offsetHeight;
+            slider.style.transition = 'transform 0.3s ease-out';
+            slider.style.webkitTransition = '-webkit-transform 0.3s ease-out';
+        }
     }
 
-    function showSlide(index) {
+    function showSlide(index, immediate = false) {
         currentIndex = Math.max(0, Math.min(index, slider.children.length - 1));
-        updateTransform(-currentIndex * slideWidth, true);
+        const x = -currentIndex * slideWidth;
+        updateTransform(x, !immediate);
     }
 
     function createSlides() {
@@ -490,22 +502,27 @@
         images.forEach(img => {
             const slide = document.createElement('div');
             slide.className = 'slide';
-            slide.innerHTML = `<img src="${img.src}" alt="${img.alt}">`;
+            slide.innerHTML = `<img src="${img.src}" alt="${img.alt}" draggable="false">`;
             slider.appendChild(slide);
         });
     }
 
-    function handleDragStart(clientX) {
+    // Modified touch handling for Safari
+    function handleTouchStart(e) {
+        if (e.touches.length > 1) return;
         isDragging = true;
-        startX = clientX;
+        startX = e.touches[0].clientX;
         startDragX = currentX;
         updateTransform(currentX, false);
     }
 
-    function handleDragMove(clientX) {
-        if (!isDragging) return;
-        const deltaX = clientX - startX;
-        updateTransform(startDragX + deltaX, false);
+    function handleTouchMove(e) {
+        if (!isDragging || e.touches.length > 1) return;
+        e.preventDefault();
+        const deltaX = e.touches[0].clientX - startX;
+        requestAnimationFrame(() => {
+            updateTransform(startDragX + deltaX, false);
+        });
     }
 
     function handleDragEnd() {
@@ -515,25 +532,27 @@
         const dragDistance = currentX - startDragX;
         const threshold = slideWidth * 0.2;
 
+        let newIndex = currentIndex;
         if (Math.abs(dragDistance) > threshold) {
             if (dragDistance > 0 && currentIndex > 0) {
-                currentIndex--;
+                newIndex = currentIndex - 1;
             } else if (dragDistance < 0 && currentIndex < slider.children.length - 1) {
-                currentIndex++;
+                newIndex = currentIndex + 1;
             }
         }
 
-        showSlide(currentIndex);
+        requestAnimationFrame(() => {
+            showSlide(newIndex);
+        });
     }
 
-    // Touch Events
+    // Touch Events with Safari fixes
     slider.addEventListener('touchstart', (e) => {
-        handleDragStart(e.touches[0].clientX);
+        handleTouchStart(e);
     }, { passive: true });
 
     slider.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        handleDragMove(e.touches[0].clientX);
+        handleTouchMove(e);
     }, { passive: false });
 
     slider.addEventListener('touchend', () => {
@@ -544,15 +563,19 @@
         handleDragEnd();
     });
 
-    // Mouse Events
+    // Mouse Events (unchanged)
     slider.addEventListener('mousedown', (e) => {
-        handleDragStart(e.clientX);
+        e.preventDefault();
+        handleTouchStart({ touches: [{ clientX: e.clientX }] });
     });
 
     slider.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         e.preventDefault();
-        handleDragMove(e.clientX);
+        handleTouchMove({ 
+            preventDefault: () => {},
+            touches: [{ clientX: e.clientX }] 
+        });
     });
 
     slider.addEventListener('mouseup', () => {
@@ -572,8 +595,7 @@
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
             slideWidth = window.innerWidth;
-            currentIndex = index;
-            showSlide(currentIndex);
+            showSlide(index, true);
         });
     });
 
@@ -587,11 +609,11 @@
     window.addEventListener('resize', () => {
         slideWidth = window.innerWidth;
         if (modal.style.display === 'block') {
-            updateTransform(-currentIndex * slideWidth, false);
+            showSlide(currentIndex, true);
         }
     });
 
-    // Like functionality
+    // Like functionality (unchanged)
     document.querySelectorAll('.heart-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
