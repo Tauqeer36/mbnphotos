@@ -467,7 +467,7 @@
     let currentX = 0;
     let isDragging = false;
     let slideWidth = window.innerWidth;
-    let startDragX = 0; // Track initial drag position
+    let startDragX = 0;
 
     function updateTransform(x, useTransition = true) {
         currentX = x;
@@ -495,18 +495,16 @@
         });
     }
 
-    function handleTouchStart(e) {
-        if (e.touches.length > 1) return;
+    function handleDragStart(clientX) {
         isDragging = true;
-        startX = e.touches[0].clientX;
+        startX = clientX;
         startDragX = currentX;
         updateTransform(currentX, false);
     }
 
-    function handleTouchMove(e) {
+    function handleDragMove(clientX) {
         if (!isDragging) return;
-        e.preventDefault();
-        const deltaX = e.touches[0].clientX - startX;
+        const deltaX = clientX - startX;
         updateTransform(startDragX + deltaX, false);
     }
 
@@ -515,20 +513,59 @@
         isDragging = false;
 
         const dragDistance = currentX - startDragX;
-        const threshold = slideWidth * 0.2; // 20% threshold for slide change
+        const threshold = slideWidth * 0.2;
 
         if (Math.abs(dragDistance) > threshold) {
-            // If dragged more than threshold, move to next/previous slide
-            if (dragDistance > 0) {
-                currentIndex = Math.max(0, currentIndex - 1);
-            } else {
-                currentIndex = Math.min(slider.children.length - 1, currentIndex + 1);
+            if (dragDistance > 0 && currentIndex > 0) {
+                currentIndex--;
+            } else if (dragDistance < 0 && currentIndex < slider.children.length - 1) {
+                currentIndex++;
             }
         }
 
         showSlide(currentIndex);
     }
 
+    // Touch Events
+    slider.addEventListener('touchstart', (e) => {
+        handleDragStart(e.touches[0].clientX);
+    }, { passive: true });
+
+    slider.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleDragMove(e.touches[0].clientX);
+    }, { passive: false });
+
+    slider.addEventListener('touchend', () => {
+        handleDragEnd();
+    });
+
+    slider.addEventListener('touchcancel', () => {
+        handleDragEnd();
+    });
+
+    // Mouse Events
+    slider.addEventListener('mousedown', (e) => {
+        handleDragStart(e.clientX);
+    });
+
+    slider.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        handleDragMove(e.clientX);
+    });
+
+    slider.addEventListener('mouseup', () => {
+        handleDragEnd();
+    });
+
+    slider.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            handleDragEnd();
+        }
+    });
+
+    // Open modal
     document.querySelectorAll('.grid-item').forEach((item, index) => {
         item.addEventListener('click', () => {
             createSlides();
@@ -540,46 +577,10 @@
         });
     });
 
+    // Close modal
     backButton.addEventListener('click', () => {
         modal.style.display = 'none';
         document.body.style.overflow = '';
-    });
-
-    // Touch events
-    slider.addEventListener('touchstart', handleTouchStart, { passive: true });
-    slider.addEventListener('touchmove', handleTouchMove, { passive: false });
-    slider.addEventListener('touchend', handleDragEnd);
-    slider.addEventListener('touchcancel', handleDragEnd);
-
-    // Mouse events
-    let isMouseDown = false;
-
-    slider.addEventListener('mousedown', (e) => {
-        isMouseDown = true;
-        startX = e.clientX;
-        startDragX = currentX;
-        updateTransform(currentX, false);
-    });
-
-    slider.addEventListener('mousemove', (e) => {
-        if (!isMouseDown) return;
-        e.preventDefault();
-        const deltaX = e.clientX - startX;
-        updateTransform(startDragX + deltaX, false);
-    });
-
-    slider.addEventListener('mouseup', () => {
-        if (isMouseDown) {
-            isMouseDown = false;
-            handleDragEnd();
-        }
-    });
-
-    slider.addEventListener('mouseleave', () => {
-        if (isMouseDown) {
-            isMouseDown = false;
-            handleDragEnd();
-        }
     });
 
     // Handle window resize
