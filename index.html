@@ -401,37 +401,32 @@
     <button class="approve-btn">Approve Selection</button>
 
     <script>
-     document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('imageModal');
     const slider = modal.querySelector('.slider');
     const backButton = modal.querySelector('.back-button');
     let currentIndex = 0;
     let startX = 0;
-    let currentTranslate = 0;
+    let currentX = 0;
     let isDragging = false;
     let slideWidth = window.innerWidth;
+    let initialPosition = 0;
 
-    function setSliderPosition(position, useTransition = true) {
-        currentTranslate = position;
-        
-        if (!useTransition) {
-            slider.style.transition = 'none';
-        } else {
-            slider.style.transition = 'transform 0.3s ease-out';
-        }
-
+    function setSliderPosition(position) {
         slider.style.transform = `translateX(${position}px)`;
-
-        if (!useTransition) {
-            // Force reflow
-            slider.offsetHeight;
-            slider.style.transition = 'transform 0.3s ease-out';
-        }
     }
 
-    function showSlide(index, immediate = false) {
-        currentIndex = Math.max(0, Math.min(index, slider.children.length - 1));
-        setSliderPosition(-currentIndex * slideWidth, !immediate);
+    function showSlide(index, animate = true) {
+        currentIndex = index;
+        const position = -index * slideWidth;
+        
+        if (animate) {
+            slider.style.transition = 'transform 0.3s ease-out';
+        } else {
+            slider.style.transition = 'none';
+        }
+        
+        setSliderPosition(position);
     }
 
     function createSlides() {
@@ -445,71 +440,46 @@
         });
     }
 
-    function handleStart(clientX) {
+    function handleStart(event) {
+        const clientX = event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
         isDragging = true;
         startX = clientX;
-        currentTranslate = -currentIndex * slideWidth;
-        setSliderPosition(currentTranslate, false);
+        initialPosition = -currentIndex * slideWidth;
+        slider.style.transition = 'none';
     }
 
-    function handleMove(clientX) {
+    function handleMove(event) {
         if (!isDragging) return;
+        event.preventDefault();
+        
+        const clientX = event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
         const diff = clientX - startX;
-        setSliderPosition(currentTranslate + diff, false);
+        const position = initialPosition + diff;
+        
+        setSliderPosition(position);
     }
 
     function handleEnd() {
         if (!isDragging) return;
         isDragging = false;
-
-        const movedBy = currentTranslate + currentIndex * slideWidth;
-        const threshold = slideWidth * 0.2;
-
-        if (Math.abs(movedBy) > threshold) {
-            if (movedBy > 0 && currentIndex > 0) {
-                currentIndex--;
-            } else if (movedBy < 0 && currentIndex < slider.children.length - 1) {
-                currentIndex++;
+        
+        const endPosition = parseFloat(slider.style.transform.replace('translateX(', ''));
+        const diff = endPosition - initialPosition;
+        
+        slider.style.transition = 'transform 0.3s ease-out';
+        
+        if (Math.abs(diff) > slideWidth * 0.2) {
+            if (diff > 0 && currentIndex > 0) {
+                showSlide(currentIndex - 1);
+            } else if (diff < 0 && currentIndex < slider.children.length - 1) {
+                showSlide(currentIndex + 1);
+            } else {
+                showSlide(currentIndex);
             }
+        } else {
+            showSlide(currentIndex);
         }
-
-        showSlide(currentIndex);
     }
-
-    // Touch Events
-    slider.addEventListener('touchstart', (e) => {
-        handleStart(e.touches[0].clientX);
-    }, { passive: true });
-
-    slider.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        handleMove(e.touches[0].clientX);
-    }, { passive: false });
-
-    slider.addEventListener('touchend', () => {
-        handleEnd();
-    });
-
-    // Mouse Events
-    slider.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        handleStart(e.clientX);
-    });
-
-    slider.addEventListener('mousemove', (e) => {
-        e.preventDefault();
-        handleMove(e.clientX);
-    });
-
-    slider.addEventListener('mouseup', () => {
-        handleEnd();
-    });
-
-    slider.addEventListener('mouseleave', () => {
-        if (isDragging) {
-            handleEnd();
-        }
-    });
 
     // Open modal
     document.querySelectorAll('.grid-item').forEach((item, index) => {
@@ -518,7 +488,7 @@
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
             slideWidth = window.innerWidth;
-            showSlide(index, true);
+            showSlide(index, false);
         });
     });
 
@@ -526,14 +496,26 @@
     backButton.addEventListener('click', () => {
         modal.style.display = 'none';
         document.body.style.overflow = '';
-        isDragging = false;
+        currentIndex = 0;
     });
+
+    // Touch Events
+    slider.addEventListener('touchstart', handleStart, { passive: true });
+    slider.addEventListener('touchmove', handleMove, { passive: false });
+    slider.addEventListener('touchend', handleEnd);
+    slider.addEventListener('touchcancel', handleEnd);
+
+    // Mouse Events
+    slider.addEventListener('mousedown', handleStart);
+    slider.addEventListener('mousemove', handleMove);
+    slider.addEventListener('mouseup', handleEnd);
+    slider.addEventListener('mouseleave', handleEnd);
 
     // Handle window resize
     window.addEventListener('resize', () => {
         slideWidth = window.innerWidth;
         if (modal.style.display === 'block') {
-            showSlide(currentIndex, true);
+            showSlide(currentIndex, false);
         }
     });
 
